@@ -18,7 +18,7 @@ private_cidr = input("Enter CIDR range for private subnet: ")
 AMI_ID = input("Enter AMI ID: ")
 instance_type = input("Enter instance type: ")
 
-# Modified prompt
+# Modified prompt for the model
 prompt = f'''
 Please generate a Terraform script that creates an AWS VPC and launches an EC2 instance in a public subnet.
 
@@ -31,26 +31,31 @@ Instance Type: {instance_type}
 
 Outputs: Displays EC2 instance ID and public IP address.
 Add variables.tf content as well.
-Do not include extra text.Give only HCL script.
+Do not include extra text. Give only HCL script.
 '''
-# AMI_ID=ami-08718895af4dfa033
+
 # Initialize an empty buffer to store the entire output
 full_output = ""
 
-# Use the client to get the streamed response
+# Use the client to get the streamed response from the model
 for message in client.chat_completion(
     model=model_name,
     messages=[{"role": "user", "content": prompt}],
     max_tokens=3500,  # Adjust token limit as needed
-    stream=True,  # Stream the output
+    stream=True,  # Enable streaming for continuous output
 ):
     content = message.choices[0].delta.content
-    print(content, end="")
-    full_output += content
+    print(content, end="")  # Print to console as it's being generated
+    full_output += content   # Append the generated content to full_output
 
-# Save everything to a single file
+# Ensure no backticks in the generated content
+full_output = full_output.replace("```=hcl", "")
+full_output = full_output.replace("```", "")
+
+
+# Save everything to a single file with UTF-8 encoding
 output_file = f"main_{inp}.tf"
-with open(output_file, "w") as file_out:
+with open(output_file, "w", encoding="utf-8") as file_out:
     file_out.write(full_output)
 
 print(f"\nTerraform script saved as {output_file}")
